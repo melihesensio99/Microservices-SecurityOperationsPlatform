@@ -1,0 +1,8 @@
+global using SecurityCore.Api.Features.Incidents;
+global using SecurityCore.Api.Infrastructure.Persistence;
+global using Microsoft.EntityFrameworkCore;
+global using MediatR;
+global using SecurityPlatform.BuildingBlocks.Cqrs;
+global using SecurityPlatform.BuildingBlocks.Pagination;
+global using SecurityPlatform.BuildingBlocks.Validation;
+global using FluentValidation;

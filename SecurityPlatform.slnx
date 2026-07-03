@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/SecurityPlatform.BuildingBlocks/SecurityPlatform.BuildingBlocks.csproj" />
+  </Folder>
+  <Folder Name="/src/SecurityCore/">
+    <Project Path="src/SecurityCore/SecurityCore.Api/SecurityCore.Api.csproj" />
+  </Folder>
+</Solution>
