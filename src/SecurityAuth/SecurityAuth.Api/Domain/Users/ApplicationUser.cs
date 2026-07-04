@@ -13,7 +13,7 @@ public sealed class ApplicationUser
     public string Username { get; }
     public string Email { get; }
     public string? PasswordHash { get; private set; }
-    public List<string> Roles { get; } = [];
+    public List<string> Roles { get; private set; } = [];
 
     public void SetPasswordHash(string passwordHash)
     {
