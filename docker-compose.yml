@@ -1,7 +1,7 @@
 services:
-  postgres:
+  securitycore-postgres:
     image: postgres:17
-    container_name: security-platform-postgres
+    container_name: security-platform-securitycore-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -9,10 +9,26 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres/init:/docker-entrypoint-initdb.d
+      - securitycore_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d securitycoredb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  securityauth-postgres:
+    image: postgres:17
+    container_name: security-platform-securityauth-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: authdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - securityauth_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d authdb"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -24,9 +40,9 @@ services:
     container_name: security-platform-securitycore-api
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__SecurityDb: Host=postgres;Port=5432;Database=securitycoredb;Username=postgres;Password=postgres
+      ConnectionStrings__SecurityDb: Host=securitycore-postgres;Port=5432;Database=securitycoredb;Username=postgres;Password=postgres
     depends_on:
-      postgres:
+      securitycore-postgres:
         condition: service_healthy
     ports:
       - "5136:8080"
@@ -38,12 +54,13 @@ services:
     container_name: security-platform-securityauth-api
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__AuthDb: Host=postgres;Port=5432;Database=authdb;Username=postgres;Password=postgres
+      ConnectionStrings__AuthDb: Host=securityauth-postgres;Port=5432;Database=authdb;Username=postgres;Password=postgres
     depends_on:
-      postgres:
+      securityauth-postgres:
         condition: service_healthy
     ports:
       - "5236:8080"
 
 volumes:
-  postgres_data:
+  securitycore_postgres_data:
+  securityauth_postgres_data:
