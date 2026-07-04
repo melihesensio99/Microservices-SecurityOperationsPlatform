@@ -1,4 +1,4 @@
-using System.Security.Claims;
+using SecurityAuth.Api.Infrastructure.UserContext;
 
 namespace SecurityAuth.Api.Features.Auth.Me;
 
@@ -12,24 +12,15 @@ public static class GetCurrentUserEndpoint
         return group;
     }
 
-    private static IResult GetCurrentUserAsync(ClaimsPrincipal user)
+    private static IResult GetCurrentUserAsync(ICurrentUserService currentUserService)
     {
-        if (user.Identity?.IsAuthenticated != true)
+        var currentUser = currentUserService.GetCurrentUser();
+
+        if (currentUser is null)
         {
             return Results.Unauthorized();
         }
 
-        var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
-        var username = user.FindFirstValue(ClaimTypes.Name) ?? string.Empty;
-        var email = user.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
-        var roles = user.FindAll(ClaimTypes.Role).Select(claim => claim.Value).ToList();
-
-        _ = Guid.TryParse(userId, out var parsedUserId);
-
-        return Results.Ok(new CurrentUserResponse(
-            parsedUserId,
-            username,
-            email,
-            roles));
+        return Results.Ok(currentUser);
     }
 }
