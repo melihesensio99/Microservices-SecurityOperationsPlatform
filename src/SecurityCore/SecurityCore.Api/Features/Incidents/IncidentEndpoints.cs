@@ -3,6 +3,7 @@ using SecurityCore.Api.Features.Incidents.Create;
 using SecurityCore.Api.Features.Incidents.GetById;
 using SecurityCore.Api.Features.Incidents.GetList;
 using SecurityCore.Api.Features.Incidents.GetNotes;
+using SecurityCore.Api.Features.Incidents.UpdateStatus;
 
 namespace SecurityCore.Api.Features.Incidents;
 
@@ -16,6 +17,7 @@ public static class IncidentEndpoints
         group
             .MapCreateIncidentEndpoint()
             .MapAddIncidentNoteEndpoint()
+            .MapUpdateIncidentStatusEndpoint()
             .MapGetIncidentsEndpoint()
             .MapGetIncidentByIdEndpoint()
             .MapGetIncidentNotesEndpoint();
