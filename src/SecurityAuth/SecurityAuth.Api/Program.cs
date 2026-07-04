@@ -1,4 +1,5 @@
 using SecurityAuth.Api.Infrastructure;
+using SecurityAuth.Api.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
