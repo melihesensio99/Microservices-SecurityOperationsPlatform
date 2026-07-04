@@ -4,7 +4,7 @@ using MediatR;
 
 namespace SecurityCore.Api.Features.Incidents.AddNote;
 
-public sealed class AddIncidentNoteCommandHandler : IRequestHandler<AddIncidentNoteCommand, IncidentDetailResponse?>
+public sealed class AddIncidentNoteCommandHandler : IRequestHandler<AddIncidentNoteCommand, Result<IncidentDetailResponse>>
 {
     private readonly IIncidentRepository _incidentRepository;
 
@@ -13,12 +13,12 @@ public sealed class AddIncidentNoteCommandHandler : IRequestHandler<AddIncidentN
         _incidentRepository = incidentRepository;
     }
 
-    public async Task<IncidentDetailResponse?> Handle(AddIncidentNoteCommand command, CancellationToken cancellationToken)
+    public async Task<Result<IncidentDetailResponse>> Handle(AddIncidentNoteCommand command, CancellationToken cancellationToken)
     {
         var incident = await _incidentRepository.GetTrackedByIdAsync(command.IncidentId, cancellationToken);
         if (incident is null)
         {
-            return null;
+            return Result<IncidentDetailResponse>.Failure(IncidentErrors.IncidentNotFound);
         }
 
         incident.AddNote(
@@ -28,6 +28,6 @@ public sealed class AddIncidentNoteCommandHandler : IRequestHandler<AddIncidentN
 
         await _incidentRepository.SaveChangesAsync(cancellationToken);
 
-        return incident.ToDetailResponse();
+        return Result<IncidentDetailResponse>.Success(incident.ToDetailResponse());
     }
 }

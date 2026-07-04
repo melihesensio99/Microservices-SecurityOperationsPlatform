@@ -21,8 +21,12 @@ public static class AddIncidentNoteEndpoint
         CancellationToken cancellationToken)
     {
         var command = new AddIncidentNoteCommand(id, request.Author, request.Message);
-        var incident = await sender.Send(command, cancellationToken);
+        var result = await sender.Send(command, cancellationToken);
 
-        return incident is null ? Results.NotFound() : Results.Ok(incident);
+        return result.IsSuccess
+            ? Results.Ok(result.Value)
+            : Results.Json(
+                new { error = result.Error.Message, code = result.Error.Code },
+                statusCode: result.Error.StatusCode);
     }
 }

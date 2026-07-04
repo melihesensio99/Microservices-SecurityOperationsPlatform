@@ -5,7 +5,7 @@ using SecurityCore.Api.Features.Incidents.Abstractions;
 
 namespace SecurityCore.Api.Features.Incidents.UpdateStatus;
 
-public sealed class UpdateIncidentStatusCommandHandler : IRequestHandler<UpdateIncidentStatusCommand, IncidentDetailResponse?>
+public sealed class UpdateIncidentStatusCommandHandler : IRequestHandler<UpdateIncidentStatusCommand, Result<IncidentDetailResponse>>
 {
     private readonly IIncidentRepository _incidentRepository;
 
@@ -14,17 +14,17 @@ public sealed class UpdateIncidentStatusCommandHandler : IRequestHandler<UpdateI
         _incidentRepository = incidentRepository;
     }
 
-    public async Task<IncidentDetailResponse?> Handle(UpdateIncidentStatusCommand request, CancellationToken cancellationToken)
+    public async Task<Result<IncidentDetailResponse>> Handle(UpdateIncidentStatusCommand request, CancellationToken cancellationToken)
     {
         var incident = await _incidentRepository.GetTrackedByIdAsync(request.IncidentId, cancellationToken);
         if (incident is null)
         {
-            return null;
+            return Result<IncidentDetailResponse>.Failure(IncidentErrors.IncidentNotFound);
         }
 
         incident.ChangeStatus(request.Status, DateTimeOffset.UtcNow);
         await _incidentRepository.SaveChangesAsync(cancellationToken);
 
-        return incident.ToDetailResponse();
+        return Result<IncidentDetailResponse>.Success(incident.ToDetailResponse());
     }
 }

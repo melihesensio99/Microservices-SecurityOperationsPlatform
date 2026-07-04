@@ -19,8 +19,12 @@ public static class UpdateIncidentStatusEndpoint
         CancellationToken cancellationToken)
     {
         var command = new UpdateIncidentStatusCommand(id, request.Status);
-        var incident = await sender.Send(command, cancellationToken);
+        var result = await sender.Send(command, cancellationToken);
 
-        return incident is null ? Results.NotFound() : Results.Ok(incident);
+        return result.IsSuccess
+            ? Results.Ok(result.Value)
+            : Results.Json(
+                new { error = result.Error.Message, code = result.Error.Code },
+                statusCode: result.Error.StatusCode);
     }
 }
