@@ -14,7 +14,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddDbContext<AuthDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("AuthDb")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("AuthDb")));
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 builder.Services.AddScoped<IUserStore, EfUserStore>();
 builder.Services.AddSingleton<PasswordHasher<ApplicationUser>>();

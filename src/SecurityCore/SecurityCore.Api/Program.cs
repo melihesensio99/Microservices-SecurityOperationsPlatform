@@ -15,7 +15,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddDbContext<SecurityCoreDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("SecurityDb")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("SecurityDb")));
 builder.Services.AddScoped<IIncidentRepository, EfIncidentRepository>();
 builder.Services.AddMediatR(config =>
 {
