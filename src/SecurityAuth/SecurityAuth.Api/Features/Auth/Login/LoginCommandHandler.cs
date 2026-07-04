@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace SecurityAuth.Api.Features.Auth.Login;
 
-public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, AuthSessionResponse?>
+public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthSessionResponse>>
 {
     private readonly IUserStore _userStore;
     private readonly PasswordHasher<ApplicationUser> _passwordHasher;
@@ -18,21 +18,21 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, AuthSess
         _tokenService = tokenService;
     }
 
-    public async Task<AuthSessionResponse?> Handle(LoginCommand request, CancellationToken cancellationToken)
+    public async Task<Result<AuthSessionResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         var username = request.Username.Trim();
         var user = await _userStore.GetByUsernameAsync(username, cancellationToken);
         if (user is null || user.PasswordHash is null)
         {
-            return null;
+            return Result<AuthSessionResponse>.Failure(AuthErrors.InvalidCredentials);
         }
 
         var passwordCheck = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
         if (passwordCheck == PasswordVerificationResult.Failed)
         {
-            return null;
+            return Result<AuthSessionResponse>.Failure(AuthErrors.InvalidCredentials);
         }
 
-        return _tokenService.CreateSession(user);
+        return Result<AuthSessionResponse>.Success(_tokenService.CreateSession(user));
     }
 }

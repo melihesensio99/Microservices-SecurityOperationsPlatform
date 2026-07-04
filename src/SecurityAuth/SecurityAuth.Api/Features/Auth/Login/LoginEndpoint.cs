@@ -18,10 +18,12 @@ public static class LoginEndpoint
         CancellationToken cancellationToken)
     {
         var command = new LoginCommand(request.Username, request.Password);
-        var session = await sender.Send(command, cancellationToken);
+        var result = await sender.Send(command, cancellationToken);
 
-        return session is null
-            ? Results.Unauthorized()
-            : Results.Ok(session);
+        return result.IsSuccess
+            ? Results.Ok(result.Value)
+            : Results.Json(
+                new { error = result.Error.Message, code = result.Error.Code },
+                statusCode: result.Error.StatusCode);
     }
 }

@@ -19,10 +19,12 @@ public static class RegisterUserEndpoint
         CancellationToken cancellationToken)
     {
         var command = new RegisterUserCommand(request.Username, request.Email, request.Password);
-        var session = await sender.Send(command, cancellationToken);
+        var result = await sender.Send(command, cancellationToken);
 
-        return session is null
-            ? Results.Conflict("A user with the same username or email already exists.")
-            : Results.Created($"/api/auth/me", session);
+        return result.IsSuccess
+            ? Results.Created($"/api/auth/me", result.Value)
+            : Results.Json(
+                new { error = result.Error.Message, code = result.Error.Code },
+                statusCode: result.Error.StatusCode);
     }
 }

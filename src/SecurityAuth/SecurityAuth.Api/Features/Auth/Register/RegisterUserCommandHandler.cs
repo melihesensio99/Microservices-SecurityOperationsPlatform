@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace SecurityAuth.Api.Features.Auth.Register;
 
-public sealed class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, AuthSessionResponse?>
+public sealed class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, Result<AuthSessionResponse>>
 {
     private readonly IUserStore _userStore;
     private readonly PasswordHasher<ApplicationUser> _passwordHasher;
@@ -18,7 +18,7 @@ public sealed class RegisterUserCommandHandler : IRequestHandler<RegisterUserCom
         _tokenService = tokenService;
     }
 
-    public async Task<AuthSessionResponse?> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
+    public async Task<Result<AuthSessionResponse>> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
         var username = request.Username.Trim();
         var email = request.Email.Trim();
@@ -28,7 +28,7 @@ public sealed class RegisterUserCommandHandler : IRequestHandler<RegisterUserCom
 
         if (existingByUsername is not null || existingByEmail is not null)
         {
-            return null;
+            return Result<AuthSessionResponse>.Failure(AuthErrors.UserAlreadyExists);
         }
 
         var user = new ApplicationUser(Guid.NewGuid(), username, email);
@@ -38,9 +38,9 @@ public sealed class RegisterUserCommandHandler : IRequestHandler<RegisterUserCom
         var added = await _userStore.TryAddAsync(user, cancellationToken);
         if (!added)
         {
-            return null;
+            return Result<AuthSessionResponse>.Failure(AuthErrors.UserAlreadyExists);
         }
 
-        return _tokenService.CreateSession(user);
+        return Result<AuthSessionResponse>.Success(_tokenService.CreateSession(user));
     }
 }
