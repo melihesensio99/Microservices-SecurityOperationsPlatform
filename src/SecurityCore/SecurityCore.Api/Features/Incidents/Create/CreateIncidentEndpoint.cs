@@ -30,7 +30,7 @@ public static class CreateIncidentEndpoint
             request.AssetName,
             request.CreatedBy);
 
-        var createdIncident = await sender.Send(command, cancellationToken);
-        return Results.Created($"/api/incidents/{createdIncident.Id}", createdIncident);
+        var result = await sender.Send(command, cancellationToken);
+        return result.ToCreatedHttpResult(incident => $"/api/incidents/{incident.Id}");
     }
 }

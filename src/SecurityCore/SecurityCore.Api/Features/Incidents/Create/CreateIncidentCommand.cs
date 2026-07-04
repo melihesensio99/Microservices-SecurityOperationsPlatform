@@ -1,5 +1,6 @@
 using SecurityCore.Api.Features.Incidents;
 using SecurityCore.Api.Domain.Incidents;
+using SecurityPlatform.BuildingBlocks.Results;
 using SecurityPlatform.BuildingBlocks.Cqrs;
 
 namespace SecurityCore.Api.Features.Incidents.Create;
@@ -9,4 +10,4 @@ public sealed record CreateIncidentCommand(
     string Description,
     IncidentSeverity Severity,
     string? AssetName,
-    string CreatedBy) : ICommand<IncidentDetailResponse>;
+    string CreatedBy) : ICommand<Result<IncidentDetailResponse>>;

@@ -5,7 +5,7 @@ using MediatR;
 
 namespace SecurityCore.Api.Features.Incidents.Create;
 
-public sealed class CreateIncidentCommandHandler : IRequestHandler<CreateIncidentCommand, IncidentDetailResponse>
+public sealed class CreateIncidentCommandHandler : IRequestHandler<CreateIncidentCommand, Result<IncidentDetailResponse>>
 {
     private readonly IIncidentRepository _incidentRepository;
 
@@ -14,7 +14,7 @@ public sealed class CreateIncidentCommandHandler : IRequestHandler<CreateInciden
         _incidentRepository = incidentRepository;
     }
 
-    public async Task<IncidentDetailResponse> Handle(CreateIncidentCommand command, CancellationToken cancellationToken)
+    public async Task<Result<IncidentDetailResponse>> Handle(CreateIncidentCommand command, CancellationToken cancellationToken)
     {
         var incident = new Incident(
             Guid.NewGuid(),
@@ -27,6 +27,6 @@ public sealed class CreateIncidentCommandHandler : IRequestHandler<CreateInciden
 
         await _incidentRepository.AddAsync(incident, cancellationToken);
 
-        return incident.ToDetailResponse();
+        return Result<IncidentDetailResponse>.Success(incident.ToDetailResponse());
     }
 }

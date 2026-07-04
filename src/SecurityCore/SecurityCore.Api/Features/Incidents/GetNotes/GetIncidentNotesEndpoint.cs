@@ -14,10 +14,6 @@ public static class GetIncidentNotesEndpoint
         CancellationToken cancellationToken)
     {
         var result = await sender.Send(new GetIncidentNotesQuery(id), cancellationToken);
-        return result.IsSuccess
-            ? Results.Ok(result.Value)
-            : Results.Json(
-                new { error = result.Error.Message, code = result.Error.Code },
-                statusCode: result.Error.StatusCode);
+        return result.ToOkHttpResult();
     }
 }

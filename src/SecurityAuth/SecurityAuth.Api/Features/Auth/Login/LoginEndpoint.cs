@@ -20,10 +20,6 @@ public static class LoginEndpoint
         var command = new LoginCommand(request.Username, request.Password);
         var result = await sender.Send(command, cancellationToken);
 
-        return result.IsSuccess
-            ? Results.Ok(result.Value)
-            : Results.Json(
-                new { error = result.Error.Message, code = result.Error.Code },
-                statusCode: result.Error.StatusCode);
+        return result.ToOkHttpResult();
     }
 }
