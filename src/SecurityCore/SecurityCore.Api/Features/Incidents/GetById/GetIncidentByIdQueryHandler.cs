@@ -4,7 +4,7 @@ using MediatR;
 
 namespace SecurityCore.Api.Features.Incidents.GetById;
 
-public sealed class GetIncidentByIdQueryHandler : IRequestHandler<GetIncidentByIdQuery, IncidentDetailResponse?>
+public sealed class GetIncidentByIdQueryHandler : IRequestHandler<GetIncidentByIdQuery, Result<IncidentDetailResponse>>
 {
     private readonly IIncidentRepository _incidentRepository;
 
@@ -13,9 +13,11 @@ public sealed class GetIncidentByIdQueryHandler : IRequestHandler<GetIncidentByI
         _incidentRepository = incidentRepository;
     }
 
-    public async Task<IncidentDetailResponse?> Handle(GetIncidentByIdQuery query, CancellationToken cancellationToken)
+    public async Task<Result<IncidentDetailResponse>> Handle(GetIncidentByIdQuery query, CancellationToken cancellationToken)
     {
         var incident = await _incidentRepository.GetByIdAsync(query.Id, cancellationToken);
-        return incident?.ToDetailResponse();
+        return incident is null
+            ? Result<IncidentDetailResponse>.Failure(IncidentErrors.IncidentNotFound)
+            : Result<IncidentDetailResponse>.Success(incident.ToDetailResponse());
     }
 }

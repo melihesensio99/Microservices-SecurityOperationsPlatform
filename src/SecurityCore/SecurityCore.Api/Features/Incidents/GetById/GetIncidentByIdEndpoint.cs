@@ -13,7 +13,11 @@ public static class GetIncidentByIdEndpoint
         ISender sender,
         CancellationToken cancellationToken)
     {
-        var incident = await sender.Send(new GetIncidentByIdQuery(id), cancellationToken);
-        return incident is null ? Results.NotFound() : Results.Ok(incident);
+        var result = await sender.Send(new GetIncidentByIdQuery(id), cancellationToken);
+        return result.IsSuccess
+            ? Results.Ok(result.Value)
+            : Results.Json(
+                new { error = result.Error.Message, code = result.Error.Code },
+                statusCode: result.Error.StatusCode);
     }
 }

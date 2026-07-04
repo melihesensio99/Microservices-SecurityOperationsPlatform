@@ -4,5 +4,6 @@ global using Microsoft.EntityFrameworkCore;
 global using MediatR;
 global using SecurityPlatform.BuildingBlocks.Cqrs;
 global using SecurityPlatform.BuildingBlocks.Pagination;
+global using SecurityPlatform.BuildingBlocks.Results;
 global using SecurityPlatform.BuildingBlocks.Validation;
 global using FluentValidation;
