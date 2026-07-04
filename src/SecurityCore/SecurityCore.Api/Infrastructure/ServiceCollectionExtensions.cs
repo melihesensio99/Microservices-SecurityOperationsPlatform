@@ -4,6 +4,7 @@ using SecurityCore.Api.Features.Incidents.Abstractions;
 using SecurityCore.Api.Features.Incidents.Create;
 using SecurityCore.Api.Infrastructure.Errors;
 using SecurityCore.Api.Infrastructure.Persistence;
+using SecurityPlatform.BuildingBlocks.DependencyInjection;
 
 namespace SecurityCore.Api.Infrastructure;
 
@@ -18,13 +19,7 @@ public static class ServiceCollectionExtensions
         services.AddDbContext<SecurityCoreDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("SecurityDb")));
         services.AddScoped<IIncidentRepository, EfIncidentRepository>();
-        services.AddMediatR(config =>
-        {
-            config.RegisterServicesFromAssemblyContaining<CreateIncidentCommand>();
-            config.AddOpenBehavior(typeof(SecurityPlatform.BuildingBlocks.Diagnostics.LoggingPipelineBehavior<,>));
-            config.AddOpenBehavior(typeof(SecurityPlatform.BuildingBlocks.Validation.ValidationPipelineBehavior<,>));
-        });
-        services.AddValidatorsFromAssemblyContaining<CreateIncidentRequestValidator>();
+        services.AddSecurityPlatformMediatR(typeof(CreateIncidentCommand).Assembly);
 
         return services;
     }

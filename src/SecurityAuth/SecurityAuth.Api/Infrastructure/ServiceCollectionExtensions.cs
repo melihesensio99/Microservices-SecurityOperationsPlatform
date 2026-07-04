@@ -7,6 +7,7 @@ using SecurityAuth.Api.Features.Auth.Register;
 using SecurityAuth.Api.Infrastructure.Errors;
 using SecurityAuth.Api.Infrastructure.Persistence;
 using SecurityAuth.Api.Infrastructure.UserContext;
+using SecurityPlatform.BuildingBlocks.DependencyInjection;
 using System.Text;
 
 namespace SecurityAuth.Api.Infrastructure;
@@ -46,12 +47,7 @@ public static class ServiceCollectionExtensions
                 };
             });
         services.AddAuthorization();
-        services.AddMediatR(config =>
-        {
-            config.RegisterServicesFromAssemblyContaining<RegisterUserCommand>();
-            config.AddOpenBehavior(typeof(ValidationPipelineBehavior<,>));
-        });
-        services.AddValidatorsFromAssemblyContaining<RegisterUserRequestValidator>();
+        services.AddSecurityPlatformMediatR(typeof(RegisterUserCommand).Assembly);
 
         return services;
     }
