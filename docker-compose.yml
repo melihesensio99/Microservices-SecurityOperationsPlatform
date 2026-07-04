@@ -11,6 +11,39 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d securitycoredb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  securitycore-api:
+    build:
+      context: .
+      dockerfile: src/SecurityCore/SecurityCore.Api/Dockerfile
+    container_name: security-platform-securitycore-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__SecurityDb: Host=postgres;Port=5432;Database=securitycoredb;Username=postgres;Password=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "5136:8080"
+
+  securityauth-api:
+    build:
+      context: .
+      dockerfile: src/SecurityAuth/SecurityAuth.Api/Dockerfile
+    container_name: security-platform-securityauth-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__AuthDb: Host=postgres;Port=5432;Database=authdb;Username=postgres;Password=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "5236:8080"
 
 volumes:
   postgres_data:
