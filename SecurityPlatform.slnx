@@ -1,5 +1,10 @@
 <Solution>
   <Folder Name="/src/" />
+  <Folder Name="/docker/">
+    <Project Path="docker-compose.dcproj">
+      <Build />
+    </Project>
+  </Folder>
   <Folder Name="/src/BuildingBlocks/">
     <Project Path="src/BuildingBlocks/SecurityPlatform.BuildingBlocks/SecurityPlatform.BuildingBlocks.csproj" />
   </Folder>
@@ -8,5 +13,8 @@
   </Folder>
   <Folder Name="/src/SecurityCore/">
     <Project Path="src/SecurityCore/SecurityCore.Api/SecurityCore.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/SecurityAudit/">
+    <Project Path="src/SecurityAudit/SecurityAudit.Api/SecurityAudit.Api.csproj" />
   </Folder>
 </Solution>

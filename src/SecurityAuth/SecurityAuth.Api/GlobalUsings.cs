@@ -5,6 +5,8 @@ global using SecurityAuth.Api.Features.Auth;
 global using SecurityAuth.Api.Infrastructure.Identity;
 global using SecurityAuth.Api.Infrastructure.Persistence;
 global using SecurityAuth.Api.Infrastructure.Security;
+global using SecurityPlatform.BuildingBlocks.Audit;
 global using SecurityPlatform.BuildingBlocks.Cqrs;
+global using SecurityPlatform.BuildingBlocks.Diagnostics;
 global using SecurityPlatform.BuildingBlocks.Results;
 global using SecurityPlatform.BuildingBlocks.Validation;

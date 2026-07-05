@@ -1,0 +1,15 @@
+global using FluentValidation;
+global using MediatR;
+global using Microsoft.EntityFrameworkCore;
+global using SecurityAudit.Api.Domain.AuditLogs;
+global using SecurityAudit.Api.Features.AuditLogs;
+global using SecurityAudit.Api.Features.AuditLogs.Create;
+global using SecurityAudit.Api.Features.AuditLogs.GetById;
+global using SecurityAudit.Api.Features.AuditLogs.GetList;
+global using SecurityAudit.Api.Infrastructure.Persistence;
+global using SecurityPlatform.BuildingBlocks.Audit;
+global using SecurityPlatform.BuildingBlocks.Cqrs;
+global using SecurityPlatform.BuildingBlocks.Diagnostics;
+global using SecurityPlatform.BuildingBlocks.Pagination;
+global using SecurityPlatform.BuildingBlocks.Results;
+global using SecurityPlatform.BuildingBlocks.Validation;

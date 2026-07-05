@@ -1,8 +1,11 @@
 using SecurityCore.Api.Infrastructure;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddSecurityCoreServices(builder.Configuration);
 
 var app = builder.Build();
@@ -21,5 +24,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.MapIncidentEndpoints();
+app.MapSecurityPlatformHealthEndpoints();
 
 app.Run();

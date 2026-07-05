@@ -7,6 +7,7 @@ using SecurityAuth.Api.Features.Auth.Register;
 using SecurityAuth.Api.Infrastructure.Errors;
 using SecurityAuth.Api.Infrastructure.Persistence;
 using SecurityAuth.Api.Infrastructure.UserContext;
+using SecurityPlatform.BuildingBlocks.Diagnostics;
 using SecurityPlatform.BuildingBlocks.DependencyInjection;
 using System.Text;
 
@@ -22,6 +23,9 @@ public static class ServiceCollectionExtensions
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddDbContext<AuthDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("AuthDb")));
+        services.AddSecurityPlatformAuditClient(configuration);
+        services.AddHealthChecks()
+            .AddCheck<DbContextHealthCheck<AuthDbContext>>("securityauth-db");
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();

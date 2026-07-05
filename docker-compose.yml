@@ -41,6 +41,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__SecurityDb: Host=securitycore-postgres;Port=5432;Database=securitycoredb;Username=postgres;Password=postgres
+      Audit__BaseUrl: http://securityaudit-api:8080
     depends_on:
       securitycore-postgres:
         condition: service_healthy
@@ -55,12 +56,45 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__AuthDb: Host=securityauth-postgres;Port=5432;Database=authdb;Username=postgres;Password=postgres
+      Audit__BaseUrl: http://securityaudit-api:8080
     depends_on:
       securityauth-postgres:
         condition: service_healthy
     ports:
       - "5236:8080"
 
+  securityaudit-postgres:
+    image: postgres:17
+    container_name: security-platform-securityaudit-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: auditdb
+    ports:
+      - "5435:5432"
+    volumes:
+      - securityaudit_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d auditdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  securityaudit-api:
+    build:
+      context: .
+      dockerfile: src/SecurityAudit/SecurityAudit.Api/Dockerfile
+    container_name: security-platform-securityaudit-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__AuditDb: Host=securityaudit-postgres;Port=5432;Database=auditdb;Username=postgres;Password=postgres
+    depends_on:
+      securityaudit-postgres:
+        condition: service_healthy
+    ports:
+      - "5336:8080"
+
 volumes:
   securitycore_postgres_data:
   securityauth_postgres_data:
+  securityaudit_postgres_data:

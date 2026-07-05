@@ -1,5 +1,4 @@
-using SecurityAuth.Api.Infrastructure;
-using SecurityAuth.Api.Infrastructure.Persistence;
+using SecurityAudit.Api.Infrastructure;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,7 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
-builder.Services.AddSecurityAuthServices(builder.Configuration);
+builder.Services.AddSecurityAuditServices(builder.Configuration);
 
 var app = builder.Build();
 
@@ -17,16 +16,14 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseExceptionHandler();
-app.UseAuthentication();
-app.UseAuthorization();
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+    var dbContext = scope.ServiceProvider.GetRequiredService<AuditDbContext>();
     dbContext.Database.EnsureCreated();
 }
 
-app.MapAuthEndpoints();
+app.MapAuditLogEndpoints();
 app.MapSecurityPlatformHealthEndpoints();
 
 app.Run();

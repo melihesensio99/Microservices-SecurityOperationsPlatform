@@ -4,6 +4,7 @@ using SecurityCore.Api.Features.Incidents.Abstractions;
 using SecurityCore.Api.Features.Incidents.Create;
 using SecurityCore.Api.Infrastructure.Errors;
 using SecurityCore.Api.Infrastructure.Persistence;
+using SecurityPlatform.BuildingBlocks.Diagnostics;
 using SecurityPlatform.BuildingBlocks.DependencyInjection;
 
 namespace SecurityCore.Api.Infrastructure;
@@ -18,6 +19,9 @@ public static class ServiceCollectionExtensions
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddDbContext<SecurityCoreDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("SecurityDb")));
+        services.AddSecurityPlatformAuditClient(configuration);
+        services.AddHealthChecks()
+            .AddCheck<DbContextHealthCheck<SecurityCoreDbContext>>("securitycore-db");
         services.AddScoped<IIncidentRepository, EfIncidentRepository>();
         services.AddSecurityPlatformMediatR(typeof(CreateIncidentCommand).Assembly);
 
