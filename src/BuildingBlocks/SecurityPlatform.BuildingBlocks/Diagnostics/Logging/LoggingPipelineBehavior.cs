@@ -9,10 +9,14 @@ public sealed class LoggingPipelineBehavior<TRequest, TResponse> : IPipelineBeha
     where TRequest : notnull
 {
     private readonly ILogger<LoggingPipelineBehavior<TRequest, TResponse>> _logger;
+    private readonly ICorrelationIdProvider _correlationIdProvider;
 
-    public LoggingPipelineBehavior(ILogger<LoggingPipelineBehavior<TRequest, TResponse>> logger)
+    public LoggingPipelineBehavior(
+        ILogger<LoggingPipelineBehavior<TRequest, TResponse>> logger,
+        ICorrelationIdProvider correlationIdProvider)
     {
         _logger = logger;
+        _correlationIdProvider = correlationIdProvider;
     }
 
     public async Task<TResponse> Handle(
@@ -23,25 +27,32 @@ public sealed class LoggingPipelineBehavior<TRequest, TResponse> : IPipelineBeha
         var requestName = typeof(TRequest).Name;
         var startedAt = Stopwatch.StartNew();
         var requestPayload = JsonSerializer.Serialize(request, request!.GetType());
+        var correlationId = _correlationIdProvider.GetCorrelationId();
 
-        _logger.LogInformation("Handling {RequestName}. Payload: {RequestPayload}", requestName, requestPayload);
+        _logger.LogInformation(
+            "Handling {RequestName}. CorrelationId: {CorrelationId}. Payload: {RequestPayload}",
+            requestName,
+            correlationId,
+            requestPayload);
 
         try
         {
             var response = await next();
             _logger.LogInformation(
-                "Handled {RequestName} in {ElapsedMilliseconds} ms",
+                "Handled {RequestName} in {ElapsedMilliseconds} ms. CorrelationId: {CorrelationId}",
                 requestName,
-                startedAt.Elapsed.TotalMilliseconds);
+                startedAt.Elapsed.TotalMilliseconds,
+                correlationId);
             return response;
         }
         catch (Exception exception)
         {
             _logger.LogError(
                 exception,
-                "Failed {RequestName} after {ElapsedMilliseconds} ms",
+                "Failed {RequestName} after {ElapsedMilliseconds} ms. CorrelationId: {CorrelationId}",
                 requestName,
-                startedAt.Elapsed.TotalMilliseconds);
+                startedAt.Elapsed.TotalMilliseconds,
+                correlationId);
             throw;
         }
     }

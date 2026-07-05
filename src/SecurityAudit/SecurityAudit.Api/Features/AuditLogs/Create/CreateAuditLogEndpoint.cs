@@ -1,3 +1,4 @@
+using MediatR;
 using SecurityPlatform.BuildingBlocks.Results;
 
 namespace SecurityAudit.Api.Features.AuditLogs.Create;
@@ -11,7 +12,7 @@ public static class CreateAuditLogEndpoint
     }
 
     private static async Task<IResult> CreateAuditLogAsync(
-        AuditLogWriteRequest request,
+        CreateAuditLogRequest request,
         ISender sender,
         CancellationToken cancellationToken)
     {

@@ -1,5 +1,6 @@
-using MediatR;
 using SecurityAudit.Api.Features.AuditLogs.Abstractions;
+using SecurityPlatform.BuildingBlocks.Results;
+using MediatR;
 
 namespace SecurityAudit.Api.Features.AuditLogs.Create;
 

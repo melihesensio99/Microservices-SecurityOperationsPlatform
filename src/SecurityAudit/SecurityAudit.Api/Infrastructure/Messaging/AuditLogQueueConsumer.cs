@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Diagnostics;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -92,6 +93,20 @@ public sealed class AuditLogQueueConsumer : BackgroundService
             return;
         }
 
+        ActivityContext parentContext = default;
+        if (eventArgs.BasicProperties is not null &&
+            RabbitMqTracePropagation.TryExtract(eventArgs.BasicProperties, out var extractedContext))
+        {
+            parentContext = extractedContext;
+        }
+
+        using var activity = parentContext == default
+            ? SecurityPlatformActivitySource.ActivitySource.StartActivity("Consume audit log", ActivityKind.Consumer)
+            : SecurityPlatformActivitySource.ActivitySource.StartActivity(
+                "Consume audit log",
+                ActivityKind.Consumer,
+                parentContext);
+
         try
         {
             var message = JsonSerializer.Deserialize<AuditLogWriteRequest>(eventArgs.Body.Span, JsonOptions);
@@ -127,9 +142,14 @@ public sealed class AuditLogQueueConsumer : BackgroundService
                 "Stored audit event {Action} from {ServiceName}.",
                 message.Action,
                 message.ServiceName);
+
+            activity?.SetTag("messaging.system", "rabbitmq");
+            activity?.SetTag("messaging.destination", _options.QueueName);
+            activity?.SetStatus(ActivityStatusCode.Ok);
         }
         catch (Exception exception)
         {
+            activity?.SetStatus(ActivityStatusCode.Error, exception.Message);
             _logger.LogError(exception, "Failed to process audit log message.");
             _channel.BasicNack(eventArgs.DeliveryTag, multiple: false, requeue: true);
         }

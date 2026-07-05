@@ -1,6 +1,9 @@
+using FluentValidation;
+using SecurityPlatform.BuildingBlocks.Audit;
+
 namespace SecurityAudit.Api.Features.AuditLogs.Create;
 
-public sealed class CreateAuditLogRequestValidator : AbstractValidator<AuditLogWriteRequest>
+public sealed class CreateAuditLogRequestValidator : AbstractValidator<CreateAuditLogRequest>
 {
     public CreateAuditLogRequestValidator()
     {

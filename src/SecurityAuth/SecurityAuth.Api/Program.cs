@@ -1,4 +1,5 @@
 using SecurityAuth.Api.Infrastructure;
+using SecurityPlatform.BuildingBlocks.DependencyInjection;
 using SecurityAuth.Api.Infrastructure.Persistence;
 using System.Text.Json.Serialization;
 
@@ -7,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.AddSecurityPlatformTracing(builder.Configuration, "SecurityAuth");
 builder.Services.AddSecurityAuthServices(builder.Configuration);
 
 var app = builder.Build();
@@ -17,6 +19,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseExceptionHandler();
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 

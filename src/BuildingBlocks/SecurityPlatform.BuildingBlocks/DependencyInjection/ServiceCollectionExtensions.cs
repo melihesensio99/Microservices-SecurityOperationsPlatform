@@ -7,7 +7,10 @@ using Microsoft.Extensions.Options;
 using SecurityPlatform.BuildingBlocks.Audit;
 using SecurityPlatform.BuildingBlocks.Diagnostics;
 using SecurityPlatform.BuildingBlocks.Validation;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using RabbitMQ.Client;
+using OpenTelemetry;
 
 namespace SecurityPlatform.BuildingBlocks.DependencyInjection;
 
@@ -17,14 +20,50 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         Assembly applicationAssembly)
     {
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICorrelationIdProvider, HttpCorrelationIdProvider>();
         services.AddMediatR(config =>
         {
             config.RegisterServicesFromAssembly(applicationAssembly);
+            config.AddOpenBehavior(typeof(TracingPipelineBehavior<,>));
             config.AddOpenBehavior(typeof(LoggingPipelineBehavior<,>));
             config.AddOpenBehavior(typeof(ValidationPipelineBehavior<,>));
         });
 
         services.AddValidatorsFromAssembly(applicationAssembly);
+
+        return services;
+    }
+
+    public static IServiceCollection AddSecurityPlatformTracing(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string serviceName)
+    {
+        services.Configure<TracingOptions>(configuration.GetSection("OpenTelemetry"));
+
+        services.AddOpenTelemetry()
+            .WithTracing(tracing =>
+            {
+                tracing
+                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName))
+                    .AddSource(SecurityPlatformActivitySource.SourceName)
+                    .AddAspNetCoreInstrumentation(options =>
+                    {
+                        options.RecordException = true;
+                        options.Filter = httpContext =>
+                            !httpContext.Request.Path.StartsWithSegments("/health");
+                    });
+
+                var tracingOptions = configuration.GetSection("OpenTelemetry").Get<TracingOptions>() ?? new TracingOptions();
+                if (tracingOptions.Enabled)
+                {
+                    tracing.AddOtlpExporter(exporter =>
+                    {
+                        exporter.Endpoint = new Uri(tracingOptions.OtlpEndpoint);
+                    });
+                }
+            });
 
         return services;
     }

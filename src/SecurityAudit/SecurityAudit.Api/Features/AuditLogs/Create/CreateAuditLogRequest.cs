@@ -1,10 +1,8 @@
 using SecurityPlatform.BuildingBlocks.Audit;
-using SecurityPlatform.BuildingBlocks.Cqrs;
-using SecurityPlatform.BuildingBlocks.Results;
 
 namespace SecurityAudit.Api.Features.AuditLogs.Create;
 
-public sealed record CreateAuditLogCommand(
+public sealed record CreateAuditLogRequest(
     string ServiceName,
     string Action,
     AuditLogLevel Level,
@@ -15,4 +13,4 @@ public sealed record CreateAuditLogCommand(
     string? ActorName,
     string? CorrelationId,
     string? MetadataJson,
-    DateTimeOffset? OccurredAt) : ICommand<Result<AuditLogDetailResponse>>;
+    DateTimeOffset? OccurredAt);
