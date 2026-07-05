@@ -1,4 +1,21 @@
 services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: security-platform-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: securityplatform
+      RABBITMQ_DEFAULT_PASS: securityplatform
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   securitycore-postgres:
     image: postgres:17
     container_name: security-platform-securitycore-postgres
@@ -41,9 +58,14 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__SecurityDb: Host=securitycore-postgres;Port=5432;Database=securitycoredb;Username=postgres;Password=postgres
-      Audit__BaseUrl: http://securityaudit-api:8080
+      AuditMessaging__HostName: rabbitmq
+      AuditMessaging__UserName: securityplatform
+      AuditMessaging__Password: securityplatform
+      AuditMessaging__QueueName: security-platform.audit-log-events
     depends_on:
       securitycore-postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     ports:
       - "5136:8080"
@@ -56,9 +78,14 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__AuthDb: Host=securityauth-postgres;Port=5432;Database=authdb;Username=postgres;Password=postgres
-      Audit__BaseUrl: http://securityaudit-api:8080
+      AuditMessaging__HostName: rabbitmq
+      AuditMessaging__UserName: securityplatform
+      AuditMessaging__Password: securityplatform
+      AuditMessaging__QueueName: security-platform.audit-log-events
     depends_on:
       securityauth-postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     ports:
       - "5236:8080"
@@ -88,8 +115,14 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__AuditDb: Host=securityaudit-postgres;Port=5432;Database=auditdb;Username=postgres;Password=postgres
+      AuditMessaging__HostName: rabbitmq
+      AuditMessaging__UserName: securityplatform
+      AuditMessaging__Password: securityplatform
+      AuditMessaging__QueueName: security-platform.audit-log-events
     depends_on:
       securityaudit-postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     ports:
       - "5336:8080"
@@ -98,3 +131,4 @@ volumes:
   securitycore_postgres_data:
   securityauth_postgres_data:
   securityaudit_postgres_data:
+  rabbitmq_data:

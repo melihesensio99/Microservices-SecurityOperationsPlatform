@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using SecurityPlatform.BuildingBlocks.Audit;
 using SecurityPlatform.BuildingBlocks.Diagnostics;
 using SecurityPlatform.BuildingBlocks.Validation;
+using RabbitMQ.Client;
 
 namespace SecurityPlatform.BuildingBlocks.DependencyInjection;
 
@@ -32,17 +33,24 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.Configure<AuditLoggingOptions>(configuration.GetSection("Audit"));
-        services.AddHttpClient<IAuditLogClient, AuditLogClient>((serviceProvider, client) =>
+        services.Configure<AuditMessagingOptions>(configuration.GetSection("AuditMessaging"));
+        services.AddSingleton(sp =>
         {
-            var options = serviceProvider.GetRequiredService<IOptions<AuditLoggingOptions>>().Value;
-            var baseUrl = string.IsNullOrWhiteSpace(options.BaseUrl)
-                ? "http://localhost:5336"
-                : options.BaseUrl.TrimEnd('/');
+            var options = sp.GetRequiredService<IOptions<AuditMessagingOptions>>().Value;
 
-            client.BaseAddress = new Uri(baseUrl);
-            client.Timeout = TimeSpan.FromSeconds(3);
+            return new ConnectionFactory
+            {
+                HostName = options.HostName,
+                Port = options.Port,
+                VirtualHost = options.VirtualHost,
+                UserName = options.UserName,
+                Password = options.Password,
+                DispatchConsumersAsync = true,
+                AutomaticRecoveryEnabled = true,
+                NetworkRecoveryInterval = TimeSpan.FromSeconds(5)
+            };
         });
+        services.AddSingleton<IAuditLogClient, AuditLogClient>();
 
         return services;
     }
