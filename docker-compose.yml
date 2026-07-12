@@ -26,85 +26,55 @@ services:
       - "4317:4317"
       - "4318:4318"
 
-  securitycore-postgres:
-    image: postgres:17
-    container_name: security-platform-securitycore-postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: securitycoredb
+  loki:
+    image: grafana/loki:3.1.0
+    container_name: security-platform-loki
+    command: -config.file=/etc/loki/config.yml
     ports:
-      - "5434:5432"
+      - "3100:3100"
     volumes:
-      - securitycore_postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d securitycoredb"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+      - ./docker/loki/loki-config.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
 
-  securityauth-postgres:
-    image: postgres:17
-    container_name: security-platform-securityauth-postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: authdb
-    ports:
-      - "5433:5432"
+  promtail:
+    image: grafana/promtail:3.1.0
+    container_name: security-platform-promtail
+    command: -config.file=/etc/promtail/config.yml
     volumes:
-      - securityauth_postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d authdb"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  securitycore-api:
-    build:
-      context: .
-      dockerfile: src/SecurityCore/SecurityCore.Api/Dockerfile
-    container_name: security-platform-securitycore-api
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__SecurityDb: Host=securitycore-postgres;Port=5432;Database=securitycoredb;Username=postgres;Password=postgres
-      AuditMessaging__HostName: rabbitmq
-      AuditMessaging__UserName: securityplatform
-      AuditMessaging__Password: securityplatform
-      AuditMessaging__QueueName: security-platform.audit-log-events
-      OpenTelemetry__OtlpEndpoint: http://jaeger:4317
+      - ./docker/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - promtail_positions:/tmp
     depends_on:
-      securitycore-postgres:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      jaeger:
-        condition: service_started
-    ports:
-      - "5136:8080"
+      - loki
 
-  securityauth-api:
-    build:
-      context: .
-      dockerfile: src/SecurityAuth/SecurityAuth.Api/Dockerfile
-    container_name: security-platform-securityauth-api
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: security-platform-grafana
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__AuthDb: Host=securityauth-postgres;Port=5432;Database=authdb;Username=postgres;Password=postgres
-      AuditMessaging__HostName: rabbitmq
-      AuditMessaging__UserName: securityplatform
-      AuditMessaging__Password: securityplatform
-      AuditMessaging__QueueName: security-platform.audit-log-events
-      OpenTelemetry__OtlpEndpoint: http://jaeger:4317
-    depends_on:
-      securityauth-postgres:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      jaeger:
-        condition: service_started
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
     ports:
-      - "5236:8080"
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - loki
+      - prometheus
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: security-platform-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
 
   securityaudit-postgres:
     image: postgres:17
@@ -147,7 +117,9 @@ services:
       - "5336:8080"
 
 volumes:
-  securitycore_postgres_data:
-  securityauth_postgres_data:
   securityaudit_postgres_data:
   rabbitmq_data:
+  loki_data:
+  grafana_data:
+  promtail_positions:
+  prometheus_data:

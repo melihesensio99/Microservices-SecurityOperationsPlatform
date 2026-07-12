@@ -29,30 +29,29 @@ public sealed class LoggingPipelineBehavior<TRequest, TResponse> : IPipelineBeha
         var requestPayload = JsonSerializer.Serialize(request, request!.GetType());
         var correlationId = _correlationIdProvider.GetCorrelationId();
 
+        using var logScope = SecurityPlatformLogContext.Push(correlationId);
+
         _logger.LogInformation(
-            "Handling {RequestName}. CorrelationId: {CorrelationId}. Payload: {RequestPayload}",
+            "Handling {RequestName}. Payload: {RequestPayload}",
             requestName,
-            correlationId,
             requestPayload);
 
         try
         {
             var response = await next();
             _logger.LogInformation(
-                "Handled {RequestName} in {ElapsedMilliseconds} ms. CorrelationId: {CorrelationId}",
+                "Handled {RequestName} in {ElapsedMilliseconds} ms.",
                 requestName,
-                startedAt.Elapsed.TotalMilliseconds,
-                correlationId);
+                startedAt.Elapsed.TotalMilliseconds);
             return response;
         }
         catch (Exception exception)
         {
             _logger.LogError(
                 exception,
-                "Failed {RequestName} after {ElapsedMilliseconds} ms. CorrelationId: {CorrelationId}",
+                "Failed {RequestName} after {ElapsedMilliseconds} ms.",
                 requestName,
-                startedAt.Elapsed.TotalMilliseconds,
-                correlationId);
+                startedAt.Elapsed.TotalMilliseconds);
             throw;
         }
     }

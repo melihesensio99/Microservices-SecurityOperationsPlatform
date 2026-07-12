@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using SecurityPlatform.BuildingBlocks.Diagnostics;
+using SecurityPlatform.BuildingBlocks.Diagnostics.Metrics;
 
 namespace SecurityPlatform.BuildingBlocks.Audit;
 
@@ -13,17 +14,20 @@ public sealed class AuditLogClient : IAuditLogClient
     private readonly AuditMessagingOptions _options;
     private readonly ILogger<AuditLogClient> _logger;
     private readonly ICorrelationIdProvider _correlationIdProvider;
+    private readonly SecurityPlatformMetricStore _metricStore;
 
     public AuditLogClient(
         ConnectionFactory connectionFactory,
         IOptions<AuditMessagingOptions> options,
         ILogger<AuditLogClient> logger,
-        ICorrelationIdProvider correlationIdProvider)
+        ICorrelationIdProvider correlationIdProvider,
+        SecurityPlatformMetricStore metricStore)
     {
         _connectionFactory = connectionFactory;
         _options = options.Value;
         _logger = logger;
         _correlationIdProvider = correlationIdProvider;
+        _metricStore = metricStore;
     }
 
     public Task<bool> TryWriteAsync(AuditLogWriteRequest request, CancellationToken cancellationToken)
@@ -35,6 +39,7 @@ public sealed class AuditLogClient : IAuditLogClient
         using var activity = SecurityPlatformActivitySource.ActivitySource.StartActivity(
             "Publish audit log",
             ActivityKind.Producer);
+        using var logScope = SecurityPlatformLogContext.Push(enrichedRequest.CorrelationId);
 
         try
         {
@@ -69,6 +74,7 @@ public sealed class AuditLogClient : IAuditLogClient
                 basicProperties: properties,
                 body: body);
 
+            _metricStore.RecordAuditLogPublished();
             activity?.SetStatus(ActivityStatusCode.Ok);
 
             return Task.FromResult(true);
@@ -82,6 +88,7 @@ public sealed class AuditLogClient : IAuditLogClient
                 enrichedRequest.Action,
                 enrichedRequest.ServiceName);
 
+            _metricStore.RecordAuditLogPublishFailure();
             return Task.FromResult(false);
         }
     }

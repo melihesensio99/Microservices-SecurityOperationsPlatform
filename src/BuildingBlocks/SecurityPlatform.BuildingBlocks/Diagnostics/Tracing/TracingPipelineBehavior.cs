@@ -29,6 +29,7 @@ public sealed class TracingPipelineBehavior<TRequest, TResponse> : IPipelineBeha
         using var activity = SecurityPlatformActivitySource.ActivitySource.StartActivity(
             requestName,
             ActivityKind.Internal);
+        using var logScope = SecurityPlatformLogContext.Push(correlationId);
 
         if (activity is not null)
         {
@@ -37,9 +38,8 @@ public sealed class TracingPipelineBehavior<TRequest, TResponse> : IPipelineBeha
         }
 
         _logger.LogDebug(
-            "Tracing {RequestName} with CorrelationId {CorrelationId}",
-            requestName,
-            correlationId);
+            "Tracing {RequestName}.",
+            requestName);
 
         try
         {

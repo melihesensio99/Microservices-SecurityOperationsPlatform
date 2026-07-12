@@ -7,6 +7,7 @@ using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 using SecurityAudit.Api.Features.AuditLogs.Abstractions;
 using SecurityPlatform.BuildingBlocks.Audit;
+using SecurityPlatform.BuildingBlocks.Diagnostics.Metrics;
 
 namespace SecurityAudit.Api.Infrastructure.Messaging;
 
@@ -18,6 +19,7 @@ public sealed class AuditLogQueueConsumer : BackgroundService
     private readonly AuditMessagingOptions _options;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<AuditLogQueueConsumer> _logger;
+    private readonly SecurityPlatformMetricStore _metricStore;
     private IConnection? _connection;
     private IModel? _channel;
 
@@ -25,12 +27,14 @@ public sealed class AuditLogQueueConsumer : BackgroundService
         ConnectionFactory connectionFactory,
         IOptions<AuditMessagingOptions> options,
         IServiceScopeFactory scopeFactory,
-        ILogger<AuditLogQueueConsumer> logger)
+        ILogger<AuditLogQueueConsumer> logger,
+        SecurityPlatformMetricStore metricStore)
     {
         _connectionFactory = connectionFactory;
         _options = options.Value;
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _metricStore = metricStore;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -106,15 +110,20 @@ public sealed class AuditLogQueueConsumer : BackgroundService
                 "Consume audit log",
                 ActivityKind.Consumer,
                 parentContext);
+        using var initialLogScope = SecurityPlatformLogContext.Push(eventArgs.BasicProperties?.CorrelationId);
 
         try
         {
+            var startedAt = Stopwatch.GetTimestamp();
             var message = JsonSerializer.Deserialize<AuditLogWriteRequest>(eventArgs.Body.Span, JsonOptions);
             if (message is null)
             {
                 _channel.BasicNack(eventArgs.DeliveryTag, multiple: false, requeue: false);
+                _metricStore.RecordAuditLogConsumeFailure();
                 return;
             }
+
+            using var messageLogScope = SecurityPlatformLogContext.Push(message.CorrelationId);
 
             using var scope = _scopeFactory.CreateScope();
             var repository = scope.ServiceProvider.GetRequiredService<IAuditLogRepository>();
@@ -146,12 +155,14 @@ public sealed class AuditLogQueueConsumer : BackgroundService
             activity?.SetTag("messaging.system", "rabbitmq");
             activity?.SetTag("messaging.destination", _options.QueueName);
             activity?.SetStatus(ActivityStatusCode.Ok);
+            _metricStore.RecordAuditLogConsumed(Stopwatch.GetElapsedTime(startedAt));
         }
         catch (Exception exception)
         {
             activity?.SetStatus(ActivityStatusCode.Error, exception.Message);
             _logger.LogError(exception, "Failed to process audit log message.");
             _channel.BasicNack(eventArgs.DeliveryTag, multiple: false, requeue: true);
+            _metricStore.RecordAuditLogConsumeFailure();
         }
     }
 

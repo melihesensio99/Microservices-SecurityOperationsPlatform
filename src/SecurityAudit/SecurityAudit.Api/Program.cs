@@ -4,10 +4,12 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Host.AddSecurityPlatformLogging("SecurityAudit");
 builder.Services.AddOpenApi();
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddSecurityPlatformTracing(builder.Configuration, "SecurityAudit");
+builder.Services.AddSecurityPlatformMetrics();
 builder.Services.AddSecurityAuditServices(builder.Configuration);
 
 var app = builder.Build();
@@ -19,6 +21,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseExceptionHandler();
 app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseSecurityPlatformLogContext();
+app.UseSecurityPlatformRequestLogging();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -28,5 +32,6 @@ using (var scope = app.Services.CreateScope())
 
 app.MapAuditLogEndpoints();
 app.MapSecurityPlatformHealthEndpoints();
+app.MapSecurityPlatformMetricsEndpoint();
 
 app.Run();

@@ -7,10 +7,10 @@ using Microsoft.Extensions.Options;
 using SecurityPlatform.BuildingBlocks.Audit;
 using SecurityPlatform.BuildingBlocks.Diagnostics;
 using SecurityPlatform.BuildingBlocks.Validation;
+using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using RabbitMQ.Client;
-using OpenTelemetry;
 
 namespace SecurityPlatform.BuildingBlocks.DependencyInjection;
 

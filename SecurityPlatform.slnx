@@ -8,12 +8,6 @@
   <Folder Name="/src/BuildingBlocks/">
     <Project Path="src/BuildingBlocks/SecurityPlatform.BuildingBlocks/SecurityPlatform.BuildingBlocks.csproj" />
   </Folder>
-  <Folder Name="/src/SecurityAuth/">
-    <Project Path="src/SecurityAuth/SecurityAuth.Api/SecurityAuth.Api.csproj" />
-  </Folder>
-  <Folder Name="/src/SecurityCore/">
-    <Project Path="src/SecurityCore/SecurityCore.Api/SecurityCore.Api.csproj" />
-  </Folder>
   <Folder Name="/src/SecurityAudit/">
     <Project Path="src/SecurityAudit/SecurityAudit.Api/SecurityAudit.Api.csproj" />
   </Folder>
